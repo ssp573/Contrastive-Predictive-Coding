@@ -105,8 +105,8 @@ class Model:
 		def generate(self,x):
 			return self.generator.forward(x)
 
-class Loss_Compute_CPC:
-	def __init__(self,x,predict_terms)
+#class Loss_Compute_CPC:
+#	def __init__(self,x,predict_terms)
 
 def make_model():
 	enc=Encoder()
