@@ -93,17 +93,17 @@ class Model:
 		self.encoder=encoder
 		self.autoregressor=autoregressor
 		self.generator=generator
-		def forward(self,terms):
-			return self.generate(self.autoregress(self.encode(terms)))
+	def forward(self,terms):
+		return self.generate(self.autoregress(self.encode(terms)))
 
-		def autoregress(self,x):
-			return self.autoregressor.forward(x)
+	def autoregress(self,x):
+		return self.autoregressor.forward(x)
 
-		def encode(self,x):
-			return self.encoder.forward(x)
+	def encode(self,x):
+		return self.encoder.forward(x)
 
-		def generate(self,x):
-			return self.generator.forward(x)
+	def generate(self,x):
+		return self.generator.forward(x)
 
 #class Loss_Compute_CPC:
 #	def __init__(self,x,predict_terms)
