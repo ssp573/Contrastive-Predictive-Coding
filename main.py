@@ -136,7 +136,7 @@ if args.train:
 		print("\n\n\nEpoch Summary: Train Loss:",train_loss,"Valid loss:",valid_loss,"\n\n\n")
 		if valid_loss<max_val_loss:
 			max_val_loss=valid_loss
-			torch.save(encoder.state_dict(),args.save_dir+"/cpc_encoder_epoch_"+str(epoch)+".pth")
+			torch.save(encoder.state_dict(),args.save_dir+"/cpc_encoder.pth")
 
 
 
