@@ -80,6 +80,9 @@ def train():
 	encoder.train()
 	autoregressor.train()
 	epoch_loss=0
+	if args.cuda:
+		encoder.to("cuda")
+		autoregressor.to("cuda")
 	for batch_idx,(data,_) in enumerate(train_loader):
 		if args.cuda:
 			data=data.to("cuda")
