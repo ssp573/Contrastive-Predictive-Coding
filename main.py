@@ -19,8 +19,8 @@ parser.add_argument('--no_cuda', action='store_true', default=False,
 help='disables CUDA training')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
 help='number of epochs to train (default: 10)')
-parser.add_argument('--code_size', type=int, default=1024, metavar='N',
-help='Encoded size (default: 1024)')
+parser.add_argument('--code_size', type=int, default=256, metavar='N',
+help='Encoded size (default: 256)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -29,6 +29,8 @@ parser.add_argument('--train', default=True, action='store_true',
 help='training a ConvNet model on MNIST dataset')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 help='how many batches to wait before logging training status')
+parser.add_argument('--save_dir', type=str, default="cpc_model", metavar='N',
+help='Where to save the encoder?')
 args = parser.parse_args()
 
 
@@ -127,10 +129,14 @@ def validate():
 
 
 if args.train:
+	max_val_loss=float("inf")
 	for epoch in range(1,args.epochs+1):
 		train_loss=train()
 		valid_loss=validate()
 		print("\n\n\nEpoch Summary: Train Loss:",train_loss,"Valid loss:",valid_loss,"\n\n\n")
+		if valid_loss<max_val_loss:
+			max_val_loss=valid_loss
+			torch.save(encoder.state_dict(),args.save_dir+"/cpc_encoder_epoch_"+str(epoch)+".pth")
 
 
 
