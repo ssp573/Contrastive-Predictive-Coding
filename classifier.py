@@ -32,6 +32,10 @@ parser.add_argument('--save_dir', type=str, default="cpc_model", metavar='N',
 help='Where to save the encoder?')
 parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
 help='input batch size for testing (default: 1000)')
+parser.add_argument('--dataset', type=str, default="MNIST", metavar='N',
+help='Which dataset?(MNIST/CIFAR10)(Default: MNIST)')
+parser.add_argument('--use_cpc', type=str, default="True", metavar='N',
+help='Use CPC Features?(Default:True) set to False to use pixels flattened image.')
 args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -39,7 +43,8 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 
-train_loader = torch.utils.data.DataLoader(
+if args.dataset=="MNIST":
+        train_loader = torch.utils.data.DataLoader(
         datasets.MNIST(root=args.dataroot, train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
@@ -47,14 +52,31 @@ train_loader = torch.utils.data.DataLoader(
                        ])),
 batch_size=args.batch_size, shuffle=True, **kwargs)
 
-test_loader = torch.utils.data.DataLoader(
+        test_loader = torch.utils.data.DataLoader(
         datasets.MNIST(root=args.dataroot, train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-batch_size=args.test_batch_size, shuffle=True, **kwargs)
+        ])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+        num_channels=1
+else:
+        train_loader = torch.utils.data.DataLoader(
+        datasets.CIFAR10(root=args.dataroot, train=True, download=True,
+        transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+        ])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
 
-encoder = encoderCNN(args.code_size)
+        test_loader = torch.utils.data.DataLoader(
+        datasets.CIFAR10(root=args.dataroot, train=False, transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+                       ])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+        num_channels=3
+
+encoder = encoderCNN(num_channels,args.code_size)
 if args.cuda:
 	encoder.to("cuda")
 encoder.load_state_dict(torch.load(args.save_dir+"/cpc_encoder.pth"))
@@ -62,7 +84,10 @@ encoder.load_state_dict(torch.load(args.save_dir+"/cpc_encoder.pth"))
 class Classifier(nn.Module):
 	def __init__(self):
 		super(Classifier,self).__init__()
-		self.linear=nn.Linear(28*28*1,10)
+		if args.use_cpc:
+			self.linear=nn.Linear(args.code_size,10)
+		else:
+			self.linear=nn.Linear(32*32*3,10)
 	def forward(self,x):
 		x=self.linear(x)
 		return F.log_softmax(x)
@@ -78,11 +103,13 @@ def train():
 	for batch_idx,(data,target) in enumerate(train_loader):
 		if args.cuda:
 			data,target=data.to("cuda"),target.to('cuda')
-		data=encoder(data)
-		#print(data.shape)
-		data=torch.mean(torch.mean(data,-1),-1)
-		#print(data.shape)
-		data=data.view(data.shape[0],-1)
+		if args.use_cpc:
+			data=encoder(data)
+			#print(data.shape)
+			data=torch.mean(torch.mean(data,-1),-1)
+			#print(data.shape)
+		else:
+			data=data.view(data.shape[0],-1)
 		data,target=Variable(data),Variable(target)
 		optimizer.zero_grad()
 		#print(data.shape)
@@ -103,11 +130,13 @@ def validate():
 	for batch,(data,target) in enumerate(test_loader):
 		if args.cuda:
 			data,target=data.to("cuda"),target.to('cuda')
-		data=encoder(data)
-		#print(data.shape)
-		data=torch.mean(torch.mean(data,-1),-1)
-		#print(data.shape)
-		#data=data.view(data.shape[0],-1)
+		if args.use_cpc:
+			data=encoder(data)
+			#print(data.shape)
+			data=torch.mean(torch.mean(data,-1),-1)
+			#print(data.shape)
+		else:
+			data=data.view(data.shape[0],-1)
 		data,target=Variable(data),Variable(target)
 		with torch.no_grad():
 			output = model(data)

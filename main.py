@@ -32,6 +32,8 @@ parser.add_argument('--log-interval', type=int, default=100, metavar='N',
 help='how many batches to wait before logging training status')
 parser.add_argument('--save_dir', type=str, default="cpc_model", metavar='N',
 help='Where to save the encoder?')
+parser.add_argument('--dataset', type=str, default="MNIST", metavar='N',
+help='Which dataset?(MNIST/CIFAR10)(Default: MNIST)')
 args = parser.parse_args()
 
 
@@ -40,33 +42,53 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-
-train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(root=args.dataroot, train=True, download=True,
+if args.dataset=="MNIST":
+	train_loader = torch.utils.data.DataLoader(
+	datasets.MNIST(root=args.dataroot, train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
 batch_size=args.batch_size, shuffle=True, **kwargs)
 
-test_loader = torch.utils.data.DataLoader(
+	test_loader = torch.utils.data.DataLoader(
         datasets.MNIST(root=args.dataroot, train=False, transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+	])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+	num_channels=1
+else:
+	train_loader = torch.utils.data.DataLoader(
+	datasets.CIFAR10(root=args.dataroot, train=True, download=True,
+	transform=transforms.Compose([
+	transforms.ToTensor(),
+	transforms.Normalize((0.1307,), (0.3081,))
+	])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+
+	test_loader = torch.utils.data.DataLoader(
+        datasets.CIFAR10(root=args.dataroot, train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
 batch_size=args.batch_size, shuffle=True, **kwargs)
+	num_channels=3
 
-print(len(test_loader))
 
 
-encoder = encoderCNN(args.code_size)
+encoder = encoderCNN(num_channels,args.code_size)
 autoregressor = Autoregressive_RNN(args.code_size,args.code_size,args.batch_size)
 
 encoder_optimizer = optim.SGD(encoder.parameters(), lr=args.lr, momentum=args.momentum)
 autoregressor_optimizer = optim.SGD(autoregressor.parameters(), lr=args.lr, momentum=args.momentum)
 
 def loss_compute(encoded,predicted):
-	target=torch.eye(36).reshape(1,36,36).repeat(encoded.shape[1],1,1)
+	#print(encoded.shape)
+	eye_shape=encoded.shape[0]
+	#print(eye_shape)
+	target=torch.eye(eye_shape).reshape(1,eye_shape,eye_shape).repeat(encoded.shape[1],1,1)
+	#print(target.shape)
 	if args.cuda:
 		target=target.to("cuda")
 
@@ -74,7 +96,7 @@ def loss_compute(encoded,predicted):
 	m=nn.Softmax(dim=1)
 	#loss_method=nn.BCELoss()
 	loss_method=nn.BCEWithLogitsLoss()
-	prod=torch.bmm(encoded.view(encoded.shape[1],36,-1),predicted.view(predicted.shape[1],-1,36))
+	prod=torch.bmm(encoded.view(encoded.shape[1],eye_shape,-1),predicted.view(predicted.shape[1],-1,eye_shape))
 	#prod=m(prod)
 	#print(softmaxed)
 	#print(softmaxed.shape)
