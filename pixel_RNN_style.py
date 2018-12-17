@@ -21,15 +21,16 @@ class Autoregressive_RNN(nn.Module):
 		#self.linear=nn.Linear(hidden_size,code_size)
 
 	def forward(self,X):
+		#print(X.shape)
 		return self.autoregress(X)
 
 	def autoregress(self,X):
-		hidden=self.init_hidden()
+		hidden=self.init_hidden(X.shape[1])
 		output,hidden=self.rnn(X,hidden)
 		return output
 
 	#def generate(self,X):
 	#	return self.linear(X)
 
-	def init_hidden(self):
-		return torch.zeros(self.num_layers,self.batch_size,self.hidden_size,device=device)
+	def init_hidden(self,num_batches):
+		return torch.zeros(self.num_layers,num_batches,self.hidden_size,device=device)

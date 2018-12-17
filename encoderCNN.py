@@ -9,6 +9,7 @@ class encoderCNN(nn.Module):
 		self.conv=nn.Conv2d(1,code_size,kernel_size=8,stride=4)
 
 	def forward(self,x):
+		#print(self.conv(x).shape)
 		return F.relu(self.conv(x))
 
 
