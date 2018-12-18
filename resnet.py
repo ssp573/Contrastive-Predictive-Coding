@@ -75,7 +75,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = nn.Linear(512*block.expansion, num_classes)
+        self.linear = nn.Linear(512 *block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -87,13 +87,20 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
+        print(out.shape)
         out = self.layer1(out)
+        print(out.shape)
         out = self.layer2(out)
+        print(out.shape)
         out = self.layer3(out)
-        out = self.layer4(out)
+        print(out.shape)
+        """out = self.layer4(out)
+        print(out.shape)
         out = F.avg_pool2d(out, 4)
+        print(out.shape)
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
+        print(out.shape)
+        out = self.linear(out)"""
         return out
 
 
@@ -113,9 +120,13 @@ def ResNet152():
     return ResNet(Bottleneck, [3,8,36,3])
 
 
+"""
 def test():
     net = ResNet101()
-    y = net(torch.randn(1,3,64,64))
+    y = net(torch.randn(1,3,96,96))
+    x = y.size(2)//8
+    y = F.avg_pool2d(y, x)
     print(y.size())
 
 test()
+"""
