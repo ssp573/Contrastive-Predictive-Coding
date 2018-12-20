@@ -9,7 +9,7 @@ Reference:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+# from main import *
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -87,13 +87,13 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        print(out.shape)
+        # print(out.shape)
         out = self.layer1(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.layer2(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.layer3(out)
-        print(out.shape)
+        # print(out.shape)
         """out = self.layer4(out)
         print(out.shape)
         out = F.avg_pool2d(out, 4)
@@ -102,6 +102,7 @@ class ResNet(nn.Module):
         print(out.shape)
         out = self.linear(out)"""
         return out
+
 
 
 def ResNet18():
@@ -119,14 +120,41 @@ def ResNet101():
 def ResNet152():
     return ResNet(Bottleneck, [3,8,36,3])
 
+kernel_size = 8 #image width/464
+overlap = 4 #overla
+batch_size = 3
+num_channels = 3
 
-"""
+def cropdata(data):
+    data = data.unfold(2,kernel_size, overlap).unfold(3,kernel_size, overlap)
+    data = data.contiguous().view(-1,num_channels,kernel_size,kernel_size)
+    return data
+
 def test():
-    net = ResNet101()
-    y = net(torch.randn(1,3,96,96))
-    x = y.size(2)//8
-    y = F.avg_pool2d(y, x)
-    print(y.size())
+    net = ResNet101().to("cuda")
+    #Ideally, (batch size, 1, 64,64) =- Expecting full image : 3, 96, 96 , 1
+    # cropper = cropperCNN()
+    # # for param in model.parameters():
+    # #     param.requires_grad = False
+    # x = cropper(torch.randn(1,3,256,256))
+    # print(x.size())
+    data = torch.randn(batch_size,3,32,32)
+    data=data.to("cuda")
 
-test()
-"""
+    # print(data.size())
+    data=cropdata(data)
+    print(data.size())
+    y = net(data)
+    y = F.avg_pool2d(y,2)
+    
+    # print(y.size())
+    # predicted_output=autoregressor(y)
+    # print(predicted_output)
+    #
+    # # y = net(torch.randn(20,1,64,64))
+    # print(y.size())
+    # x = y.size(2)//8
+    # y = F.avg_pool2d(y, x)
+    # print(y.size())
+
+# test()
