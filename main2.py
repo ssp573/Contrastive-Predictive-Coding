@@ -62,6 +62,17 @@ batch_size=args.batch_size, shuffle=True, **kwargs)
 	])),
 batch_size=args.batch_size, shuffle=True, **kwargs)
 	num_channels=1
+elif args.dataset=="LSUN":
+        train_loader = torch.utils.data.DataLoader(
+        datasets.LSUN("LSUN", classes=['dining_room_train','bridge_train','bedroom_train','church_outdoor_train','tower_train'],
+        transform=transforms.Compose([transforms.Resize((96,96)),transforms.ToTensor()])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+
+        test_loader = torch.utils.data.DataLoader(
+        datasets.LSUN("LSUN", classes=['dining_room_val','bridge_val','bedroom_val','church_outdoor_val','tower_val'], transform=transforms.Compose([transforms.Resize((96,96)),transforms.ToTensor()])),
+batch_size=args.batch_size, shuffle=True, **kwargs)
+        num_channels=3
+
 else:
 	train_loader = torch.utils.data.DataLoader(
 	datasets.CIFAR10(root=args.dataroot, train=True, download=True,
