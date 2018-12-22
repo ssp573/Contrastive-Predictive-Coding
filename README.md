@@ -6,7 +6,7 @@ Use main.py to train CPC features using CNN encoder. You can change various para
 
 Use main2.py to train CPC features using Resnet encoder. You can change various parameters using command-line arguments as given in the code.
 
-Use classifier.py and classifier_resnet.py for the classification after CPC training.
+Use classifier.py and classifier_with_resnet.py for the classification after CPC training.
 
 Use make_clusters.py to get features and targets as pickle files.
 
