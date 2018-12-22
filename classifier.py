@@ -30,11 +30,13 @@ parser.add_argument('--log-interval', type=int, default=100, metavar='N',
 help='how many batches to wait before logging training status')
 parser.add_argument('--save_dir', type=str, default="cpc_model", metavar='N',
 help='Where to save the encoder?')
+parser.add_argument('--model', type=str, default="cpc_encoder", metavar='N',
+help='Name of saved model (Without .pth)')
 parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
 help='input batch size for testing (default: 1000)')
 parser.add_argument('--dataset', type=str, default="MNIST", metavar='N',
 help='Which dataset?(MNIST/CIFAR10)(Default: MNIST)')
-parser.add_argument('--use_cpc', type=str, default="True", metavar='N',
+parser.add_argument('--use_cpc', type=bool, default="True", metavar='N',
 help='Use CPC Features?(Default:True) set to False to use pixels flattened image.')
 args = parser.parse_args()
 
@@ -79,7 +81,7 @@ batch_size=args.batch_size, shuffle=True, **kwargs)
 encoder = encoderCNN(num_channels,args.code_size)
 if args.cuda:
 	encoder.to("cuda")
-encoder.load_state_dict(torch.load(args.save_dir+"/cpc_encoder.pth"))
+encoder.load_state_dict(torch.load(args.save_dir+"/"+args.model+".pth"))
 
 class Classifier(nn.Module):
 	def __init__(self):
