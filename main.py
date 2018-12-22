@@ -85,10 +85,19 @@ autoregressor_optimizer = optim.SGD(autoregressor.parameters(), lr=args.lr, mome
 
 def loss_compute(encoded,predicted):
 	#print(encoded.shape)
+	#eye_shape=encoded.shape[0]
+	#print(eye_shape)
+	#target=torch.eye(eye_shape).reshape(1,eye_shape,eye_shape).repeat(encoded.shape[1],1,1)
+	#print(target.shape)
 	eye_shape=encoded.shape[0]
 	#print(eye_shape)
-	target=torch.eye(eye_shape).reshape(1,eye_shape,eye_shape).repeat(encoded.shape[1],1,1)
-	#print(target.shape)
+	target=torch.eye(eye_shape)
+	#print(target[1:].shape)
+	#print(target[0].shape)
+	target=torch.cat((target[1:],target[0].reshape(1,-1)))
+	target[-1][0]=0
+	target[-1][-1]=1
+	target=target.reshape(1,eye_shape,-1).repeat(encoded.shape[1],1,1)
 	if args.cuda:
 		target=target.to("cuda")
 
@@ -121,8 +130,10 @@ def train():
 		output=output.view(output.shape[-1]*output.shape[-1],output.shape[0],-1)
 		#print(output.shape)
 		predicted_output=autoregressor(output)
-		#print(predicted_output.shape)
+		#print(predicted_output,output)
 		loss=loss_compute(output,predicted_output)
+		break
+		#print(loss.item())
 		epoch_loss+=loss.item()
 		loss.backward()
 		encoder_optimizer.step()
@@ -131,7 +142,9 @@ def train():
 			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
 				epoch, batch_idx * len(data), len(train_loader.dataset),
 				100. * batch_idx / len(train_loader), loss.item()))
-	return epoch_loss/output.shape[0]
+	#print(len(train_loader))
+	return epoch_loss/len(train_loader)
+
 
 def validate():
 	encoder.eval()
@@ -157,7 +170,7 @@ def validate():
 				print('Eval Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
 				epoch, batch_idx * len(data), len(test_loader.dataset),
 				100. * batch_idx / len(test_loader), loss.item()))
-	return epoch_loss/output.shape[0]
+	return epoch_loss/len(test_loader)
 
 
 if args.train:
@@ -167,13 +180,15 @@ if args.train:
 	for epoch in range(1,args.epochs+1):
 		train_loss=train()
 		valid_loss=validate()
+		#print(train_loss)
 		all_train_losses.append(train_loss)
 		all_valid_losses.append(valid_loss)
 		print("\n\n\nEpoch Summary: Train Loss:",train_loss,"Valid loss:",valid_loss,"\n\n\n")
 		if valid_loss<max_val_loss:
 			max_val_loss=valid_loss
-			torch.save(encoder.state_dict(),args.save_dir+"/cpc_encoder.pth")
-	plot(all_train_losses,all_valid_losses)
+			torch.save(encoder.state_dict(),args.save_dir+"/cpc_encoder_"+args.dataset+"_"+str(args.code_size)+".pth")
+	plot(all_train_losses,all_valid_losses,args.dataset,args.code_size)
+
 
 
 
